@@ -1,0 +1,26 @@
+FROM python:3.8.6
+
+RUN apt-get update && apt-get install -y netcat
+
+# set working directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# set environment varibles
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV FLASK_ENV production
+ENV FLASK_APP manage.py
+ENV DATABASE_URL ${DATABASE_URL}
+ENV OPENEXCHANGERATES_APP_ID e7147e9a547d4b5da1f8bd2b1a9e3a58
+ENV APP_SETTINGS exchange_operations.config.ProductionConfig
+
+# add and install requirements
+COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN pip install -r requirements.txt
+
+# add app
+COPY . /usr/src/app
+
+# run gunicorn
+CMD gunicorn --bind 0.0.0.0:$PORT manage:app

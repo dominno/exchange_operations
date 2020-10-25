@@ -1,0 +1,48 @@
+version: "3.7"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=manage.py
+      - APP_SETTINGS=exchange_operations.config.DevelopmentConfig
+      - DATABASE_URL=mysql+pymysql://root:root@db:3306/operations_dev
+      - DATABASE_TEST_URL=mysql+pymysql://root:root@db:3306/operations_test
+      - OPENEXCHANGERATES_APP_ID=${OPENEXCHANGERATES_APP_ID}
+
+    depends_on:
+      - "db"
+  db:
+    image: mysql:8.0.21
+    ports:
+      - "32000:2"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=db
+      - MYSQL_PASSWORD=test
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:ro
+  frontend:
+    build:
+      context: ./exchange_operations/frontend
+      dockerfile: Dockerfile
+    volumes:
+      - './exchange_operations/frontend:/usr/src/app'
+      - '/usr/src/app/node_modules'
+    ports:
+      - 3000:3000
+    stdin_open: true
+    environment:
+      - HOST=0.0.0.0
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_EXCHANGE_OPERATIONS_SERVICE_URL=${REACT_APP_EXCHANGE_OPERATIONS_SERVICE_URL}
+    depends_on:
+      - api
+
